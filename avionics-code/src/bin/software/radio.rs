@@ -1,10 +1,10 @@
 use crate::DELAY;
 use crate::firmware::radio::Radio;
-use crate::firmware::radio::RadioInitArguments;
 use embassy_time::Timer;
 use heapless::format;
 use log::error;
 use log::warn;
+use shared::RadioInitArguments;
 
 use crate::SHARED_CHANNEL;
 

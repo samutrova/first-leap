@@ -15,17 +15,15 @@ use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
 use esp_hal::timer::timg::TimerGroup;
 use esp_println as _;
+use shared::RadioInitArguments;
+use software::barometer;
+use software::imu;
+use software::radio;
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
 mod firmware;
 mod software;
-
-use software::barometer;
-use software::imu;
-use software::radio;
-
-use crate::firmware::radio::RadioInitArguments;
 
 struct MainSharedChannelData {
     time: u64,

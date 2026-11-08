@@ -1,14 +1,17 @@
-use cc1101_embassy::{Cc1101, Modulation, RadioConfig, TxPower};
+use cc1101_embassy::{Cc1101, RadioConfig};
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_hal::{
-    dma::{AnySpiDmaChannel, DmaRxBuf, DmaTxBuf},
+    dma::{DmaRxBuf, DmaTxBuf},
     dma_buffers,
-    gpio::{AnyPin, Input, InputConfig, Level, Output, OutputConfig},
-    spi::master::{AnySpi, Config, Spi},
+    gpio::{Input, InputConfig, Level, Output, OutputConfig},
+    spi::master::{Config, Spi},
     time::Rate,
 };
-use heapless::{String, Vec};
+use heapless::String;
 use log::error;
+use shared::{
+    APPEND_STATUS, BAUD_RATE, CHANNEL, FREQUENCY_HZ, MODULATION, RadioInitArguments, TX_POWER,
+};
 
 pub struct Radio<'a>(
     Cc1101<
@@ -21,38 +24,6 @@ pub struct Radio<'a>(
         Input<'a>,
     >,
 );
-
-pub struct RadioInitArguments<'a> {
-    pub sclk: AnyPin<'a>,
-    pub mosi: AnyPin<'a>,
-    pub miso: AnyPin<'a>,
-    pub cs: AnyPin<'a>,
-    pub spi: AnySpi<'a>,
-    pub gdo0: AnyPin<'a>,
-    pub gdo2: AnyPin<'a>,
-    pub dma_channel: AnySpiDmaChannel<'a>,
-}
-
-impl<'a> RadioInitArguments<'a> {
-    pub fn reborrow(&mut self) -> RadioInitArguments<'_> {
-        RadioInitArguments {
-            sclk: self.sclk.reborrow(),
-            mosi: self.mosi.reborrow(),
-            miso: self.miso.reborrow(),
-            cs: self.cs.reborrow(),
-            spi: self.spi.reborrow(),
-            gdo0: self.gdo0.reborrow(),
-            gdo2: self.gdo2.reborrow(),
-            dma_channel: self.dma_channel.reborrow(),
-        }
-    }
-}
-
-pub struct RadioData {
-    pub data: String<32>,
-    pub rssi: i16,
-    pub lqi: u8,
-}
 
 impl<'a> Radio<'a> {
     pub async fn init(arguments: RadioInitArguments<'a>) -> Option<Self> {
@@ -78,12 +49,12 @@ impl<'a> Radio<'a> {
         let spi_device = ExclusiveDevice::new_no_delay(spi_bus, cs).unwrap();
 
         let config = RadioConfig::new()
-            .frequency_hz(433_920_000)
-            .baud_rate(38_400)
-            .modulation(Modulation::Gfsk)
-            .tx_power(TxPower::Dbm10)
-            .channel(0)
-            .append_status(true);
+            .frequency_hz(FREQUENCY_HZ)
+            .baud_rate(BAUD_RATE)
+            .modulation(MODULATION)
+            .tx_power(TX_POWER)
+            .channel(CHANNEL)
+            .append_status(APPEND_STATUS);
 
         let gdo0 = Input::new(arguments.gdo0, InputConfig::default());
         let gdo2 = Input::new(arguments.gdo2, InputConfig::default());
@@ -107,20 +78,5 @@ impl<'a> Radio<'a> {
 
     pub async fn transmit(&mut self, data: String<32>) -> bool {
         self.0.transmit(data.as_bytes()).await.is_ok()
-    }
-
-    pub async fn receive(&mut self) -> Option<RadioData> {
-        let mut buf = [0u8; 32];
-        if let Ok(packet) = self.0.receive(&mut buf).await {
-            let vec: Vec<u8, 32> = Vec::from_slice(&buf[..packet.len]).unwrap();
-            let data = String::from_utf8(vec).unwrap();
-            Some(RadioData {
-                data,
-                rssi: packet.rssi_dbm,
-                lqi: packet.lqi,
-            })
-        } else {
-            None
-        }
     }
 }
