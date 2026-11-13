@@ -2,7 +2,6 @@ use embassy_time::Timer;
 use esp_hal::gpio::AnyPin;
 use esp_hal::i2c::master::AnyI2c;
 use esp_hal::time::Instant;
-use esp_println::println;
 use log::{error, warn};
 use shared::radio::TelemetryData;
 
