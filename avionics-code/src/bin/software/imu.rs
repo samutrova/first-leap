@@ -2,10 +2,12 @@ use embassy_time::Timer;
 use esp_hal::gpio::AnyPin;
 use esp_hal::i2c::master::AnyI2c;
 use esp_hal::time::Instant;
+use esp_println::println;
 use log::{error, warn};
+use shared::radio::TelemetryData;
 
+use crate::DELAY;
 use crate::firmware::imu::Imu;
-use crate::{DELAY, MainSharedChannelData};
 
 use crate::SHARED_CHANNEL;
 
@@ -18,12 +20,29 @@ pub async fn imu(mut sda: AnyPin<'static>, mut scl: AnyPin<'static>, mut i2c_bus
 
     loop {
         if let Some(ref mut imu) = imu {
-            if let Some(data) = imu.get_accelerometer_data().await {
-                let time = start_time.elapsed().as_secs();
-                let data = MainSharedChannelData::new(time, data.y);
+            if let Some(data) = imu.get_data().await {
+                let data = TelemetryData {
+                    time: start_time.elapsed().as_secs(),
+                    accelerometer_x: data.accelerometer_x,
+                    accelerometer_y: data.accelerometer_y,
+                    accelerometer_z: data.accelerometer_z,
+                    gyroscope_x: data.gyroscope_x,
+                    gyroscope_y: data.gyroscope_y,
+                    gyroscope_z: data.gyroscope_z,
+                }; // 16 530
+                /*println!(
+                    "{} , {} , {} , {} , {} , {} , {}",
+                    data.time,
+                    data.accelerometer_x,
+                    data.accelerometer_y,
+                    data.accelerometer_z,
+                    data.gyroscope_x,
+                    data.gyroscope_y,
+                    data.gyroscope_z
+                );*/
                 sender.send(data).await;
             } else {
-                warn!("IMU -> Failed to read accelerometer data");
+                warn!("IMU -> Failed to read data");
             }
         } else {
             error!("IMU -> Failed to initialize");

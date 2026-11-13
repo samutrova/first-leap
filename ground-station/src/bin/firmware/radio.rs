@@ -1,4 +1,4 @@
-use cc1101_embassy::{Cc1101, Modulation, RadioConfig, TxPower};
+use cc1101_embassy::{Cc1101, RadioConfig};
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_hal::{
     dma::{DmaRxBuf, DmaTxBuf},
@@ -9,7 +9,10 @@ use esp_hal::{
 };
 use heapless::{String, Vec};
 use log::error;
-use shared::{Packet, RadioInitArguments};
+use shared::radio::{
+    APPEND_STATUS, BAUD_RATE, CHANNEL, FREQUENCY_HZ, MODULATION, Packet, RadioInitArguments,
+    TX_POWER,
+};
 
 pub struct Radio<'a>(
     Cc1101<
@@ -47,12 +50,12 @@ impl<'a> Radio<'a> {
         let spi_device = ExclusiveDevice::new_no_delay(spi_bus, cs).unwrap();
 
         let config = RadioConfig::new()
-            .frequency_hz(433_920_000)
-            .baud_rate(38_400)
-            .modulation(Modulation::Gfsk)
-            .tx_power(TxPower::Dbm10)
-            .channel(0)
-            .append_status(true);
+            .frequency_hz(FREQUENCY_HZ)
+            .baud_rate(BAUD_RATE)
+            .modulation(MODULATION)
+            .tx_power(TX_POWER)
+            .channel(CHANNEL)
+            .append_status(APPEND_STATUS);
 
         let gdo0 = Input::new(arguments.gdo0, InputConfig::default());
         let gdo2 = Input::new(arguments.gdo2, InputConfig::default());
@@ -75,13 +78,13 @@ impl<'a> Radio<'a> {
     }
 
     pub async fn receive(&mut self) -> Option<Packet> {
-        let mut buf = [0u8; 32];
+        let mut buf = [0u8; 64];
         if let Ok(packet) = self.0.receive(&mut buf).await {
-            let vec: Vec<u8, 32> = Vec::from_slice(&buf[..packet.len]).unwrap();
-            let data = String::from_utf8(vec).unwrap();
+            let data: Vec<u8, 64> = Vec::from_slice(&buf[..packet.len]).unwrap();
+            let data = String::from_utf8(data).unwrap();
             Some(Packet {
                 data,
-                rssi: packet.rssi_dbm,
+                rssi_dbm: packet.rssi_dbm,
                 lqi: packet.lqi,
             })
         } else {

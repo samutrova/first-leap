@@ -1,10 +1,9 @@
 use crate::DELAY;
 use crate::firmware::radio::Radio;
 use embassy_time::Timer;
-use heapless::format;
 use log::error;
 use log::warn;
-use shared::RadioInitArguments;
+use shared::radio::RadioInitArguments;
 
 use crate::SHARED_CHANNEL;
 
@@ -16,9 +15,8 @@ pub async fn radio(mut arguments: RadioInitArguments<'static>) {
 
     loop {
         if let Some(ref mut radio) = radio {
-            let data = channel_receiver.receive().await;
-            let data = format!(32; "{},{}", data.time, data.accelerometer_y).unwrap();
-            if !radio.transmit(data).await {
+            let packet = channel_receiver.receive().await;
+            if !radio.transmit(&packet.to_string()).await {
                 warn!("Radio -> Failed to transmit packet");
             }
         } else {

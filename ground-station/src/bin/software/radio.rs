@@ -3,7 +3,7 @@ use crate::firmware::radio::Radio;
 use embassy_time::Timer;
 use log::error;
 use log::info;
-use shared::RadioInitArguments;
+use shared::radio::RadioInitArguments;
 
 #[embassy_executor::task]
 pub async fn radio(mut arguments: RadioInitArguments<'static>) {
@@ -11,10 +11,10 @@ pub async fn radio(mut arguments: RadioInitArguments<'static>) {
 
     loop {
         if let Some(ref mut radio) = radio {
-            if let Some(data) = radio.receive().await {
+            if let Some(packet) = radio.receive().await {
                 info!(
                     "Data: {} , rssi: {} , lqi: {}",
-                    data.data, data.rssi, data.lqi
+                    packet.data, packet.rssi_dbm, packet.lqi
                 );
             }
         } else {

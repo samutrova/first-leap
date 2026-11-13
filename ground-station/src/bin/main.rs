@@ -13,7 +13,7 @@ use embassy_time::Timer;
 use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
 use esp_hal::timer::timg::TimerGroup;
-use shared::RadioInitArguments;
+use shared::radio::RadioInitArguments;
 extern crate alloc;
 
 esp_bootloader_esp_idf::esp_app_desc!();

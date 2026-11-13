@@ -8,10 +8,13 @@ use log::error;
 
 pub struct Imu<'a>(Bmi160<'a, I2c<'a, esp_hal::Async>>);
 
-pub struct AccelerometerData {
-    pub x: i16,
-    pub y: i16,
-    pub z: i16,
+pub struct IMUData {
+    pub accelerometer_x: i16,
+    pub accelerometer_y: i16,
+    pub accelerometer_z: i16,
+    pub gyroscope_x: i16,
+    pub gyroscope_y: i16,
+    pub gyroscope_z: i16,
 }
 
 impl<'a> Imu<'a> {
@@ -36,15 +39,37 @@ impl<'a> Imu<'a> {
         }
     }
 
-    pub async fn get_accelerometer_data(&mut self) -> Option<AccelerometerData> {
-        if let Ok(data) = self.0.read_accel().await {
-            Some(AccelerometerData {
-                x: data.x,
-                y: data.y,
-                z: data.z,
-            })
-        } else {
-            None
+    pub async fn get_data(&mut self) -> Option<IMUData> {
+        match self.0.read_accel().await {
+            Ok(accelerometer) => match self.0.read_gyro().await {
+                Ok(gyroscope) => Some(IMUData {
+                    accelerometer_x: accelerometer.x,
+                    accelerometer_y: accelerometer.y,
+                    accelerometer_z: accelerometer.z,
+                    gyroscope_x: gyroscope.x,
+                    gyroscope_y: gyroscope.y,
+                    gyroscope_z: gyroscope.z,
+                }),
+                Err(_) => Some(IMUData {
+                    accelerometer_x: accelerometer.x,
+                    accelerometer_y: accelerometer.y,
+                    accelerometer_z: accelerometer.z,
+                    gyroscope_x: 0,
+                    gyroscope_y: 0,
+                    gyroscope_z: 0,
+                }),
+            },
+            Err(_) => match self.0.read_gyro().await {
+                Ok(gyroscope) => Some(IMUData {
+                    accelerometer_x: 0,
+                    accelerometer_y: 0,
+                    accelerometer_z: 0,
+                    gyroscope_x: gyroscope.x,
+                    gyroscope_y: gyroscope.y,
+                    gyroscope_z: gyroscope.z,
+                }),
+                Err(_) => None,
+            },
         }
     }
 }

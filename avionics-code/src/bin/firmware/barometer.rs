@@ -10,8 +10,8 @@ use log::error;
 pub struct Barometer<'a>(Bmp280<I2c<'a, esp_hal::Async>>);
 
 pub struct BarometerData {
-    pub pressure_hpa: i32,
-    pub temperature_c: i32,
+    pub pressure_hpa: f32,
+    pub temperature_c: f32,
 }
 
 impl<'a> Barometer<'a> {
@@ -40,11 +40,9 @@ impl<'a> Barometer<'a> {
 
     pub async fn read(&mut self) -> Option<BarometerData> {
         if let Ok(data) = self.0.read().await {
-            let pressure_hpa = (data.pressure_pa256 / (256 * 100)) as i32;
-            let temperature_c = data.temperature_cdeg / 100;
             Some(BarometerData {
-                pressure_hpa,
-                temperature_c,
+                pressure_hpa: data.pressure_hpa(),
+                temperature_c: data.temperature_celsius(),
             })
         } else {
             None

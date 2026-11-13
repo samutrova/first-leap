@@ -7,9 +7,8 @@ use esp_hal::{
     spi::master::{Config, Spi},
     time::Rate,
 };
-use heapless::String;
 use log::error;
-use shared::{
+use shared::radio::{
     APPEND_STATUS, BAUD_RATE, CHANNEL, FREQUENCY_HZ, MODULATION, RadioInitArguments, TX_POWER,
 };
 
@@ -76,7 +75,7 @@ impl<'a> Radio<'a> {
         }
     }
 
-    pub async fn transmit(&mut self, data: String<32>) -> bool {
+    pub async fn transmit(&mut self, data: &str) -> bool {
         self.0.transmit(data.as_bytes()).await.is_ok()
     }
 }

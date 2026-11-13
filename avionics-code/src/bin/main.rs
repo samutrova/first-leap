@@ -15,7 +15,8 @@ use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
 use esp_hal::timer::timg::TimerGroup;
 use esp_println as _;
-use shared::RadioInitArguments;
+use shared::radio::RadioInitArguments;
+use shared::radio::TelemetryData;
 use software::barometer;
 use software::imu;
 use software::radio;
@@ -25,30 +26,7 @@ esp_bootloader_esp_idf::esp_app_desc!();
 mod firmware;
 mod software;
 
-struct MainSharedChannelData {
-    time: u64,
-    accelerometer_y: i16,
-}
-
-impl MainSharedChannelData {
-    fn new(time: u64, accelerometer_y: i16) -> Self {
-        Self {
-            time,
-            accelerometer_y,
-        }
-    }
-}
-
-// TODO: not used for now
-struct _SecondarySharedChannelData {
-    accelerometer_x: i16,
-    accelerometer_z: i16,
-    gyroscope_x: i16,
-    gyroscope_y: i16,
-    gyroscope_z: i16,
-}
-
-static SHARED_CHANNEL: Channel<CriticalSectionRawMutex, MainSharedChannelData, 2> = Channel::new();
+static SHARED_CHANNEL: Channel<CriticalSectionRawMutex, TelemetryData, 2> = Channel::new();
 
 static DELAY: u64 = 50;
 
@@ -71,9 +49,6 @@ async fn main(spawner: Spawner) -> ! {
     esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
 
     // ==== PROGRAM ====
-    // -- LED --
-    // let mut led = Output::new(peripherals.GPIO14, Level::Low, OutputConfig::default());
-
     // -- IMU --
     spawner.spawn(
         imu::imu(
@@ -110,7 +85,6 @@ async fn main(spawner: Spawner) -> ! {
     );
 
     loop {
-        // led.set_high();
         Timer::after_millis(DELAY).await;
     }
 }
