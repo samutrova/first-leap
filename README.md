@@ -1,6 +1,7 @@
 # ***Model Rocket Source Code***
 
-[![License](https://img.shields.io/crates/l/losan.svg)](LICENSE-MIT)
+[![LicenseMIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE-MIT)
+[![LicenseAPACHE](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE-MIT)
 
 > A model rocket's flight code and real-time telemetry ground receiver. The ground station receives live flight telemetry from the flight.
 

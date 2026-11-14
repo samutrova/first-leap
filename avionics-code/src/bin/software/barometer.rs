@@ -30,10 +30,7 @@ pub async fn barometer(
                     qfe_hpa = data.pressure_hpa;
                 }
 
-                println!("Altitude    [m]   : {}", altitude_m);
-                println!("QFE         [hPa] : {}", qfe_hpa);
-                println!("Pressure    [hPa] : {}", data.pressure_hpa);
-                println!("Temperature [°C]  : {}", data.temperature_c)
+                // TODO: send data to shared channel
             } else {
                 warn!("Barometer -> Failed to read data");
             }

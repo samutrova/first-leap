@@ -27,6 +27,7 @@ checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 name = "avionics-code"
 version = "0.1.0"
 dependencies = [
+ "bmi160",
  "cc1101-embassy",
  "critical-section",
  "embassy-bmp280",
@@ -87,6 +88,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3078c7629b62d3f0439517fa394996acacc5cbc91c5a20d8c658e77abd503a71"
 dependencies = [
  "generic-array",
+]
+
+[[package]]
+name = "bmi160"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08f182c4a544e32f77368cd53034ce184b2d7d41ed58c95c5b3a65893ae2c2aa"
+dependencies = [
+ "embedded-hal 1.0.0",
 ]
 
 [[package]]

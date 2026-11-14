@@ -78,9 +78,9 @@ impl<'a> Radio<'a> {
     }
 
     pub async fn receive(&mut self) -> Option<Packet> {
-        let mut buf = [0u8; 64];
+        let mut buf = [0u8; 128];
         if let Ok(packet) = self.0.receive(&mut buf).await {
-            let data: Vec<u8, 64> = Vec::from_slice(&buf[..packet.len]).unwrap();
+            let data: Vec<u8, 128> = Vec::from_slice(&buf[..packet.len]).unwrap();
             let data = String::from_utf8(data).unwrap();
             Some(Packet {
                 data,

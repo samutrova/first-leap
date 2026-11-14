@@ -2,6 +2,7 @@ use embassy_time::Timer;
 use esp_hal::gpio::AnyPin;
 use esp_hal::i2c::master::AnyI2c;
 use esp_hal::time::Instant;
+use esp_println::println;
 use log::{error, warn};
 use shared::radio::TelemetryData;
 
@@ -20,26 +21,29 @@ pub async fn imu(mut sda: AnyPin<'static>, mut scl: AnyPin<'static>, mut i2c_bus
     loop {
         if let Some(ref mut imu) = imu {
             if let Some(data) = imu.get_data().await {
-                let data = TelemetryData {
+                let raw_data = TelemetryData {
                     time: start_time.elapsed().as_secs(),
-                    accelerometer_x: data.accelerometer_x,
-                    accelerometer_y: data.accelerometer_y,
-                    accelerometer_z: data.accelerometer_z,
-                    gyroscope_x: data.gyroscope_x,
-                    gyroscope_y: data.gyroscope_y,
-                    gyroscope_z: data.gyroscope_z,
-                }; // 16 530
-                /*println!(
+                    acceleration_x_ms2: data.accelerometer_x,
+                    acceleration_y_ms2: data.accelerometer_y,
+                    acceleration_z_ms2: data.accelerometer_z,
+                    tilt_x_deg: data.gyroscope_x,
+                    tilt_y_deg: data.gyroscope_y,
+                    tilt_z_deg: data.gyroscope_z,
+                };
+
+                let data = raw_data.into_units();
+                println!(
                     "{} , {} , {} , {} , {} , {} , {}",
                     data.time,
-                    data.accelerometer_x,
-                    data.accelerometer_y,
-                    data.accelerometer_z,
-                    data.gyroscope_x,
-                    data.gyroscope_y,
-                    data.gyroscope_z
-                );*/
-                sender.send(data).await;
+                    data.acceleration_x_ms2,
+                    data.acceleration_y_ms2,
+                    data.acceleration_z_ms2,
+                    data.tilt_x_deg,
+                    data.tilt_y_deg,
+                    data.tilt_z_deg
+                );
+
+                sender.send(raw_data.into_units()).await;
             } else {
                 warn!("IMU -> Failed to read data");
             }
