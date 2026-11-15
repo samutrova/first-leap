@@ -1,11 +1,10 @@
 use embassy_time::Timer;
 use esp_hal::gpio::AnyPin;
 use esp_hal::i2c::master::AnyI2c;
-use esp_println::println;
 use log::{error, warn};
 
-use crate::DELAY;
 use crate::firmware::barometer::Barometer;
+use crate::{BAROMETRIC_CHANNEL, DELAY};
 
 #[embassy_executor::task]
 pub async fn barometer(
@@ -15,6 +14,7 @@ pub async fn barometer(
 ) {
     let mut barometer = Barometer::init(sda.reborrow(), scl.reborrow(), i2c_bus.reborrow()).await;
 
+    let barometer_sender = BAROMETRIC_CHANNEL.sender();
     let mut qfe_hpa = -1.0;
 
     loop {
@@ -30,7 +30,14 @@ pub async fn barometer(
                     qfe_hpa = data.pressure_hpa;
                 }
 
-                // TODO: send data to shared channel
+                barometer_sender
+                    .send(BarometricData {
+                        altitude_m,
+                        pressure_hpa: data.pressure_hpa,
+                        qfe_hpa,
+                        temperature_c: data.temperature_c,
+                    })
+                    .await;
             } else {
                 warn!("Barometer -> Failed to read data");
             }
@@ -40,6 +47,23 @@ pub async fn barometer(
         }
 
         Timer::after_millis(DELAY).await;
+    }
+}
+
+pub struct BarometricData {
+    pub altitude_m: f32,
+    pub pressure_hpa: f32,
+    pub qfe_hpa: f32,
+    pub temperature_c: f32,
+}
+
+impl BarometricData {
+    pub fn as_str(&self) -> Option<&str> {
+        format_args!(
+            "{},{},{},{}",
+            self.altitude_m, self.pressure_hpa, self.qfe_hpa, self.temperature_c
+        )
+        .as_str()
     }
 }
 

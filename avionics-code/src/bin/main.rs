@@ -21,14 +21,17 @@ use software::barometer;
 use software::imu;
 use software::radio;
 
+use crate::software::barometer::BarometricData;
+
 esp_bootloader_esp_idf::esp_app_desc!();
 
 mod firmware;
 mod software;
 
-static SHARED_CHANNEL: Channel<CriticalSectionRawMutex, TelemetryData, 2> = Channel::new();
+static TELEMETRY_CHANNEL: Channel<CriticalSectionRawMutex, TelemetryData, 1> = Channel::new();
+static BAROMETRIC_CHANNEL: Channel<CriticalSectionRawMutex, BarometricData, 1> = Channel::new();
 
-static DELAY: u64 = 50;
+const DELAY: u64 = 50;
 
 #[allow(
     clippy::large_stack_frames,
@@ -48,7 +51,6 @@ async fn main(spawner: Spawner) -> ! {
         esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
     esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
 
-    // ==== PROGRAM ====
     // -- IMU --
     spawner.spawn(
         imu::imu(

@@ -75,7 +75,7 @@ impl<'a> Radio<'a> {
         }
     }
 
-    pub async fn transmit(&mut self, data: &str) -> bool {
-        self.0.transmit(data.as_bytes()).await.is_ok()
+    pub async fn transmit(&mut self, data: &[u8]) -> bool {
+        self.0.transmit(data).await.is_ok()
     }
 }

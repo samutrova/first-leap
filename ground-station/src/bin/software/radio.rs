@@ -9,11 +9,13 @@ use shared::radio::RadioInitArguments;
 pub async fn radio(mut arguments: RadioInitArguments<'static>) {
     let mut radio = Radio::init(arguments.reborrow()).await;
 
+    let mut buf = [0_u8; 128];
+
     loop {
         if let Some(ref mut radio) = radio {
-            if let Some(packet) = radio.receive().await {
+            if let Some(packet) = radio.receive(&mut buf).await {
                 info!(
-                    "Data: {} , rssi: {} , lqi: {}",
+                    "Data: {} , rssi: {} dBm , lqi: {}",
                     packet.data, packet.rssi_dbm, packet.lqi
                 );
             }

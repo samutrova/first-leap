@@ -1479,9 +1479,18 @@ name = "shared"
 version = "0.1.0"
 dependencies = [
  "cc1101-embassy",
+ "critical-section",
+ "embassy-executor",
+ "embassy-time",
+ "esp-alloc",
+ "esp-backtrace",
  "esp-bootloader-esp-idf",
  "esp-hal",
+ "esp-println",
+ "esp-rtos",
  "heapless 0.9.3",
+ "log",
+ "static_cell",
 ]
 
 [[package]]

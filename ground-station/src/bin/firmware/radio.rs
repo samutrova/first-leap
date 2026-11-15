@@ -7,7 +7,6 @@ use esp_hal::{
     spi::master::{Config, Spi},
     time::Rate,
 };
-use heapless::{String, Vec};
 use log::error;
 use shared::radio::{
     APPEND_STATUS, BAUD_RATE, CHANNEL, FREQUENCY_HZ, MODULATION, Packet, RadioInitArguments,
@@ -77,11 +76,9 @@ impl<'a> Radio<'a> {
         }
     }
 
-    pub async fn receive(&mut self) -> Option<Packet> {
-        let mut buf = [0u8; 128];
-        if let Ok(packet) = self.0.receive(&mut buf).await {
-            let data: Vec<u8, 128> = Vec::from_slice(&buf[..packet.len]).unwrap();
-            let data = String::from_utf8(data).unwrap();
+    pub async fn receive<'b>(&'b mut self, buf: &'b mut [u8; 128]) -> Option<Packet<'b>> {
+        if let Ok(packet) = self.0.receive(buf).await {
+            let data = str::from_utf8(&buf[..packet.len]).unwrap();
             Some(Packet {
                 data,
                 rssi_dbm: packet.rssi_dbm,

@@ -1,6 +1,5 @@
 use cc1101_embassy::{Modulation, TxPower};
 use esp_hal::{dma::AnySpiDmaChannel, gpio::AnyPin, spi::master::AnySpi};
-use heapless::{String, format};
 
 pub const FREQUENCY_HZ: u32 = 433_920_000;
 pub const BAUD_RATE: u32 = 38_400;
@@ -35,8 +34,8 @@ impl<'a> RadioInitArguments<'a> {
     }
 }
 
-pub struct Packet {
-    pub data: String<128>,
+pub struct Packet<'a> {
+    pub data: &'a str,
     pub rssi_dbm: i16,
     pub lqi: u8,
 }
@@ -52,8 +51,18 @@ pub struct TelemetryData {
 }
 
 impl TelemetryData {
-    pub fn to_string(&self) -> String<128> {
-        format!(128; "{};{};{};{};{};{};{}", self.time, self.acceleration_x_ms2, self.acceleration_y_ms2, self.acceleration_z_ms2, self.tilt_x_deg, self.tilt_y_deg, self.tilt_z_deg).unwrap()
+    pub fn as_str(&self) -> Option<&str> {
+        format_args!(
+            "{},{},{},{},{},{},{}",
+            self.time,
+            self.acceleration_x_ms2,
+            self.acceleration_y_ms2,
+            self.acceleration_z_ms2,
+            self.tilt_x_deg,
+            self.tilt_y_deg,
+            self.tilt_z_deg
+        )
+        .as_str()
     }
 
     pub fn into_units(&self) -> Self {

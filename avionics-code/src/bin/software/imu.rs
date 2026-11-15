@@ -2,20 +2,19 @@ use embassy_time::Timer;
 use esp_hal::gpio::AnyPin;
 use esp_hal::i2c::master::AnyI2c;
 use esp_hal::time::Instant;
-use esp_println::println;
 use log::{error, warn};
 use shared::radio::TelemetryData;
 
 use crate::DELAY;
 use crate::firmware::imu::Imu;
 
-use crate::SHARED_CHANNEL;
+use crate::TELEMETRY_CHANNEL;
 
 #[embassy_executor::task]
 pub async fn imu(mut sda: AnyPin<'static>, mut scl: AnyPin<'static>, mut i2c_bus: AnyI2c<'static>) {
     let mut imu = Imu::init(sda.reborrow(), scl.reborrow(), i2c_bus.reborrow()).await;
 
-    let sender = SHARED_CHANNEL.sender();
+    let telemetry_sender = TELEMETRY_CHANNEL.sender();
     let start_time = Instant::now();
 
     loop {
@@ -30,20 +29,7 @@ pub async fn imu(mut sda: AnyPin<'static>, mut scl: AnyPin<'static>, mut i2c_bus
                     tilt_y_deg: data.gyroscope_y,
                     tilt_z_deg: data.gyroscope_z,
                 };
-
-                let data = raw_data.into_units();
-                println!(
-                    "{} , {} , {} , {} , {} , {} , {}",
-                    data.time,
-                    data.acceleration_x_ms2,
-                    data.acceleration_y_ms2,
-                    data.acceleration_z_ms2,
-                    data.tilt_x_deg,
-                    data.tilt_y_deg,
-                    data.tilt_z_deg
-                );
-
-                sender.send(raw_data.into_units()).await;
+                telemetry_sender.send(raw_data.into_units()).await;
             } else {
                 warn!("IMU -> Failed to read data");
             }
