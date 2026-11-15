@@ -16,20 +16,20 @@ use esp_hal::clock::CpuClock;
 use esp_hal::timer::timg::TimerGroup;
 use esp_println as _;
 use shared::radio::RadioInitArguments;
-use shared::radio::TelemetryData;
 use software::barometer;
 use software::imu;
 use software::radio;
 
 use crate::software::barometer::BarometricData;
+use crate::software::imu::InertialData;
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
 mod firmware;
 mod software;
 
-static TELEMETRY_CHANNEL: Channel<CriticalSectionRawMutex, TelemetryData, 1> = Channel::new();
-static BAROMETRIC_CHANNEL: Channel<CriticalSectionRawMutex, BarometricData, 1> = Channel::new();
+static IMU_CHANNEL: Channel<CriticalSectionRawMutex, InertialData, 1> = Channel::new();
+static BAROMETER_CHANNEL: Channel<CriticalSectionRawMutex, BarometricData, 1> = Channel::new();
 
 const DELAY: u64 = 50;
 

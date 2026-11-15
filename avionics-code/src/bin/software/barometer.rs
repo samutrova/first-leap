@@ -1,10 +1,11 @@
 use embassy_time::Timer;
 use esp_hal::gpio::AnyPin;
 use esp_hal::i2c::master::AnyI2c;
+use heapless::{String, format};
 use log::{error, warn};
 
 use crate::firmware::barometer::Barometer;
-use crate::{BAROMETRIC_CHANNEL, DELAY};
+use crate::{BAROMETER_CHANNEL, DELAY};
 
 #[embassy_executor::task]
 pub async fn barometer(
@@ -14,7 +15,7 @@ pub async fn barometer(
 ) {
     let mut barometer = Barometer::init(sda.reborrow(), scl.reborrow(), i2c_bus.reborrow()).await;
 
-    let barometer_sender = BAROMETRIC_CHANNEL.sender();
+    let barometer_sender = BAROMETER_CHANNEL.sender();
     let mut qfe_hpa = -1.0;
 
     loop {
@@ -58,12 +59,13 @@ pub struct BarometricData {
 }
 
 impl BarometricData {
-    pub fn as_str(&self) -> Option<&str> {
-        format_args!(
-            "{},{},{},{}",
+    pub fn to_string(&self) -> String<64> {
+        format!(
+            64;
+            "{};{};{};{}",
             self.altitude_m, self.pressure_hpa, self.qfe_hpa, self.temperature_c
         )
-        .as_str()
+        .unwrap_or_default()
     }
 }
 

@@ -33,7 +33,6 @@ dependencies = [
  "embassy-bmp280",
  "embassy-embedded-hal",
  "embassy-executor",
- "embassy-gy-bmi160",
  "embassy-sync 0.8.0",
  "embassy-time",
  "embedded-hal-bus",
@@ -407,17 +406,6 @@ name = "embassy-futures"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc2d050bdc5c21e0862a89256ed8029ae6c290a93aecefc73084b3002cdebb01"
-
-[[package]]
-name = "embassy-gy-bmi160"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4319983c1aded71da88386718ef73073704ae1b96184941f20bff75ecad2315"
-dependencies = [
- "embassy-sync 0.8.0",
- "embassy-time",
- "embedded-hal-async",
-]
 
 [[package]]
 name = "embassy-hal-internal"
@@ -1488,7 +1476,6 @@ dependencies = [
  "esp-hal",
  "esp-println",
  "esp-rtos",
- "heapless 0.9.3",
  "log",
  "static_cell",
 ]

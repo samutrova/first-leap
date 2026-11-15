@@ -27,6 +27,7 @@ impl<'a> Barometer<'a> {
 
         let barometer = Bmp280::new(i2c, Bmp280Address::Secondary, Bmp280Config::default()).await;
 
+        // Stabilize sensor values
         Timer::after_millis(1000).await;
 
         match barometer {
