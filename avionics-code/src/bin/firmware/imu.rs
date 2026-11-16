@@ -64,21 +64,25 @@ impl<'a> Imu<'a> {
     }
 
     pub async fn get_data(&mut self) -> Option<IMUData> {
-        if let Ok(data) = self.0.data_scaled(SensorSelector::new().accel().gyro()) {
-            // We can safely call .unwrap() because we selected the sensors (theoretically)
-            let accelerometer = data.accel.unwrap();
-            let gyroscope = data.gyro.unwrap();
-            Some(IMUData {
-                accelerometer_x: accelerometer.x,
-                accelerometer_y: accelerometer.y,
-                accelerometer_z: accelerometer.z,
+        match self.0.data_scaled(SensorSelector::new().accel().gyro()) {
+            Ok(data) => {
+                // We can safely call .unwrap() because we selected the sensor mode (theoretically)
+                let accelerometer = data.accel.unwrap();
+                let gyroscope = data.gyro.unwrap();
+                Some(IMUData {
+                    accelerometer_x: accelerometer.x,
+                    accelerometer_y: accelerometer.y,
+                    accelerometer_z: accelerometer.z,
 
-                gyroscope_x: gyroscope.x,
-                gyroscope_y: gyroscope.y,
-                gyroscope_z: gyroscope.z,
-            })
-        } else {
-            None
+                    gyroscope_x: gyroscope.x,
+                    gyroscope_y: gyroscope.y,
+                    gyroscope_z: gyroscope.z,
+                })
+            }
+            Err(e) => {
+                error!("IMU -> Failed to read data: {:#?}", e);
+                None
+            }
         }
     }
 }

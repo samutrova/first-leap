@@ -2,7 +2,8 @@ use embassy_time::Timer;
 use esp_hal::gpio::AnyPin;
 use esp_hal::i2c::master::AnyI2c;
 use heapless::{String, format};
-use log::{error, warn};
+use log::error;
+use shared::round::MyRound;
 
 use crate::DELAY;
 use crate::firmware::imu::{IMUData, Imu};
@@ -28,11 +29,8 @@ pub async fn imu(mut sda: AnyPin<'static>, mut scl: AnyPin<'static>, mut i2c_bus
                     gyroscope_z: data.gyroscope_z,
                 };
                 telemetry_sender.send(raw_data.into_units()).await;
-            } else {
-                warn!("IMU -> Failed to read data");
             }
         } else {
-            error!("IMU -> Failed to initialize");
             imu = Imu::init(sda.reborrow(), scl.reborrow(), i2c_bus.reborrow()).await;
         }
 
@@ -55,9 +53,24 @@ pub struct InertialData {
 }
 
 impl InertialData {
-    pub fn to_string(&self) -> String<256> {
-        format!(
-            256;
+    pub fn round(&mut self) {
+        self.acceleration_x_ms2 = MyRound::round(self.acceleration_x_ms2);
+        self.acceleration_y_ms2 = MyRound::round(self.acceleration_y_ms2);
+        self.acceleration_z_ms2 = MyRound::round(self.acceleration_z_ms2);
+
+        self.tilt_x_deg = MyRound::round(self.tilt_x_deg);
+        self.tilt_y_deg = MyRound::round(self.tilt_y_deg);
+        self.tilt_z_deg = MyRound::round(self.tilt_z_deg);
+
+        self.g_force_x = MyRound::round(self.g_force_x);
+        self.g_force_y = MyRound::round(self.g_force_y);
+        self.g_force_z = MyRound::round(self.g_force_z);
+    }
+
+    pub fn as_string(&mut self) -> String<128> {
+        self.round();
+        match format!(
+            128;
             "{};{};{};{};{};{};{};{};{}",
 
             self.acceleration_x_ms2,
@@ -71,8 +84,13 @@ impl InertialData {
             self.g_force_x,
             self.g_force_y,
             self.g_force_z,
-        )
-        .unwrap_or_default()
+        ) {
+            Ok(string) => string,
+            Err(e) => {
+                error!("IMU -> Failed to format string: {}", e);
+                String::new()
+            }
+        }
     }
 }
 

@@ -31,7 +31,7 @@ mod software;
 static IMU_CHANNEL: Channel<CriticalSectionRawMutex, InertialData, 1> = Channel::new();
 static BAROMETER_CHANNEL: Channel<CriticalSectionRawMutex, BarometricData, 1> = Channel::new();
 
-const DELAY: u64 = 50;
+const DELAY: u64 = 100;
 
 #[allow(
     clippy::large_stack_frames,

@@ -40,13 +40,15 @@ impl<'a> Barometer<'a> {
     }
 
     pub async fn read(&mut self) -> Option<BarometerData> {
-        if let Ok(data) = self.0.read().await {
-            Some(BarometerData {
+        match self.0.read().await {
+            Ok(data) => Some(BarometerData {
                 pressure_hpa: data.pressure_hpa(),
                 temperature_c: data.temperature_celsius(),
-            })
-        } else {
-            None
+            }),
+            Err(e) => {
+                error!("Barometer -> Failed to read data: {:#?}", e);
+                None
+            }
         }
     }
 }

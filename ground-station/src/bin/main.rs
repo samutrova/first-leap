@@ -21,7 +21,7 @@ esp_bootloader_esp_idf::esp_app_desc!();
 mod firmware;
 mod software;
 
-static DELAY: u64 = 50;
+const DELAY: u64 = 100;
 
 #[allow(
     clippy::large_stack_frames,

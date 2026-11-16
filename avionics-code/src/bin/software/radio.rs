@@ -2,7 +2,6 @@ use crate::BAROMETER_CHANNEL;
 use crate::DELAY;
 use crate::firmware::radio::Radio;
 use embassy_time::Timer;
-use log::{error, warn};
 use shared::radio::RadioInitArguments;
 
 use crate::IMU_CHANNEL;
@@ -16,19 +15,12 @@ pub async fn radio(mut arguments: RadioInitArguments<'static>) {
 
     loop {
         if let Some(ref mut radio) = radio {
-            let inertial_data = imu_receiver.receive().await;
-            let barometric_data = barometer_receiver.receive().await;
+            let mut inertial_data = imu_receiver.receive().await;
+            let mut barometric_data = barometer_receiver.receive().await;
 
-            if !radio.transmit(inertial_data.to_string().as_bytes()).await {
-                warn!("Radio -> Failed to transmit inertial packet");
-            }
-
-            if !radio.transmit(barometric_data.to_string().as_bytes()).await {
-                warn!("Radio -> Failed to transmit barometric packet");
-            }
+            radio.transmit(inertial_data.as_string().as_bytes()).await;
+            radio.transmit(barometric_data.as_string().as_bytes()).await;
         } else {
-            error!("Radio -> Failed to initialize");
-
             drop(radio);
             radio = Radio::init(arguments.reborrow()).await;
         }

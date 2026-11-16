@@ -2,7 +2,8 @@ use embassy_time::Timer;
 use esp_hal::gpio::AnyPin;
 use esp_hal::i2c::master::AnyI2c;
 use heapless::{String, format};
-use log::{error, warn};
+use log::error;
+use shared::round::MyRound;
 
 use crate::firmware::barometer::Barometer;
 use crate::{BAROMETER_CHANNEL, DELAY};
@@ -39,11 +40,8 @@ pub async fn barometer(
                         temperature_c: data.temperature_c,
                     })
                     .await;
-            } else {
-                warn!("Barometer -> Failed to read data");
             }
         } else {
-            error!("Barometer -> Failed to initialize");
             barometer = Barometer::init(sda.reborrow(), scl.reborrow(), i2c_bus.reborrow()).await;
         }
 
@@ -59,13 +57,26 @@ pub struct BarometricData {
 }
 
 impl BarometricData {
-    pub fn to_string(&self) -> String<64> {
-        format!(
+    pub fn round(&mut self) {
+        self.altitude_m = MyRound::round(self.altitude_m);
+        self.pressure_hpa = MyRound::round(self.pressure_hpa);
+        self.qfe_hpa = MyRound::round(self.qfe_hpa);
+        self.temperature_c = MyRound::round(self.temperature_c);
+    }
+
+    pub fn as_string(&mut self) -> String<64> {
+        self.round();
+        match format!(
             64;
             "{};{};{};{}",
             self.altitude_m, self.pressure_hpa, self.qfe_hpa, self.temperature_c
-        )
-        .unwrap_or_default()
+        ) {
+            Ok(string) => string,
+            Err(e) => {
+                error!("Barometer -> Failed to format string: {}", e);
+                String::new()
+            }
+        }
     }
 }
 

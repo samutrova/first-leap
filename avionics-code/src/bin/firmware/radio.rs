@@ -64,7 +64,7 @@ impl<'a> Radio<'a> {
             Ok(mut radio) => match radio.configure(&config).await {
                 Ok(_) => Some(Radio(radio)),
                 Err(e) => {
-                    error!("Radio -> {:#?}", e);
+                    error!("Radio -> Failed to configure: {:#?}", e);
                     None
                 }
             },
@@ -75,7 +75,10 @@ impl<'a> Radio<'a> {
         }
     }
 
-    pub async fn transmit(&mut self, data: &[u8]) -> bool {
-        self.0.transmit(data).await.is_ok()
+    pub async fn transmit(&mut self, data: &[u8]) {
+        match self.0.transmit(data).await {
+            Ok(_) => {}
+            Err(e) => error!("Radio -> Failed to transmit data: {:#?}", e),
+        }
     }
 }
