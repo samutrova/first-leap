@@ -9,6 +9,8 @@ use esp_hal::{
 };
 use log::error;
 
+use crate::IMU_READY;
+
 pub struct Imu<'a>(Bmi160<bmi160::interface::I2cInterface<I2c<'a, esp_hal::Async>>>);
 
 pub struct IMUData {
@@ -34,19 +36,34 @@ impl<'a> Imu<'a> {
 
         let mut imu = Bmi160::new_with_i2c(i2c, SlaveAddr::default());
         if !Self::configure(&mut imu) {
+            unsafe {
+                IMU_READY = false;
+            }
+
             return None;
         }
 
         match imu.status() {
             Ok(status) => {
                 if status.accel_data_ready && status.gyro_data_ready && status.nvm_ready {
+                    unsafe {
+                        IMU_READY = true;
+                    }
                     Some(Imu(imu))
                 } else {
+                    unsafe {
+                        IMU_READY = false;
+                    }
+
                     error!("IMU -> Not ready");
                     None
                 }
             }
             Err(e) => {
+                unsafe {
+                    IMU_READY = false;
+                }
+
                 error!("IMU -> {:#?}", e);
                 None
             }
@@ -69,6 +86,11 @@ impl<'a> Imu<'a> {
                 // We can safely call .unwrap() because we selected the sensor mode (theoretically)
                 let accelerometer = data.accel.unwrap();
                 let gyroscope = data.gyro.unwrap();
+
+                unsafe {
+                    IMU_READY = true;
+                }
+
                 Some(IMUData {
                     accelerometer_x: accelerometer.x,
                     accelerometer_y: accelerometer.y,
@@ -80,6 +102,10 @@ impl<'a> Imu<'a> {
                 })
             }
             Err(e) => {
+                unsafe {
+                    IMU_READY = false;
+                }
+
                 error!("IMU -> Failed to read data: {:#?}", e);
                 None
             }

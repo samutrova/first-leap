@@ -12,6 +12,8 @@ use shared::radio::{
     APPEND_STATUS, BAUD_RATE, CHANNEL, FREQUENCY_HZ, MODULATION, RadioInitArguments, TX_POWER,
 };
 
+use crate::RADIO_READY;
+
 pub struct Radio<'a>(
     Cc1101<
         ExclusiveDevice<
@@ -62,13 +64,26 @@ impl<'a> Radio<'a> {
 
         match radio {
             Ok(mut radio) => match radio.configure(&config).await {
-                Ok(_) => Some(Radio(radio)),
+                Ok(_) => {
+                    unsafe {
+                        RADIO_READY = true;
+                    }
+                    Some(Radio(radio))
+                }
                 Err(e) => {
+                    unsafe {
+                        RADIO_READY = false;
+                    }
+
                     error!("Radio -> Failed to configure: {:#?}", e);
                     None
                 }
             },
             Err(e) => {
+                unsafe {
+                    RADIO_READY = false;
+                }
+
                 error!("Radio -> {:#?}", e);
                 None
             }
@@ -77,8 +92,15 @@ impl<'a> Radio<'a> {
 
     pub async fn transmit(&mut self, data: &[u8]) {
         match self.0.transmit(data).await {
-            Ok(_) => {}
-            Err(e) => error!("Radio -> Failed to transmit data: {:#?}", e),
+            Ok(_) => unsafe {
+                RADIO_READY = true;
+            },
+            Err(e) => {
+                unsafe {
+                    RADIO_READY = false;
+                }
+                error!("Radio -> Failed to transmit data: {:#?}", e)
+            }
         }
     }
 }

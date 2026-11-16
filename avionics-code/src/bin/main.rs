@@ -13,6 +13,8 @@ use embassy_sync::channel::Channel;
 use embassy_time::Timer;
 use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
+use esp_hal::gpio::Output;
+use esp_hal::gpio::OutputConfig;
 use esp_hal::timer::timg::TimerGroup;
 use esp_println as _;
 use shared::radio::RadioInitArguments;
@@ -30,6 +32,10 @@ mod software;
 
 static IMU_CHANNEL: Channel<CriticalSectionRawMutex, InertialData, 1> = Channel::new();
 static BAROMETER_CHANNEL: Channel<CriticalSectionRawMutex, BarometricData, 1> = Channel::new();
+
+static mut IMU_READY: bool = false;
+static mut BAROMETER_READY: bool = false;
+static mut RADIO_READY: bool = false;
 
 const DELAY: u64 = 100;
 
@@ -50,6 +56,15 @@ async fn main(spawner: Spawner) -> ! {
     let sw_interrupt =
         esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
     esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
+
+    // -- LED --
+    // The LED is useful when I don't have the microcontroller connected
+    // to a computer to see errors on the terminal
+    let mut led = Output::new(
+        peripherals.GPIO2, // Built-in LED
+        esp_hal::gpio::Level::High,
+        OutputConfig::default(),
+    );
 
     // -- IMU --
     spawner.spawn(
@@ -87,6 +102,15 @@ async fn main(spawner: Spawner) -> ! {
     );
 
     loop {
-        Timer::after_millis(DELAY).await;
+        unsafe {
+            // LED on -> All okay
+            // LED on and off -> Something is not okay
+            if IMU_READY && BAROMETER_READY && RADIO_READY {
+                led.set_high();
+            } else {
+                led.toggle();
+            }
+        }
+        Timer::after_millis(500).await;
     }
 }

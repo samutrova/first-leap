@@ -7,6 +7,8 @@ use esp_hal::{
 };
 use log::error;
 
+use crate::BAROMETER_READY;
+
 pub struct Barometer<'a>(Bmp280<I2c<'a, esp_hal::Async>>);
 
 pub struct BarometerData {
@@ -31,8 +33,17 @@ impl<'a> Barometer<'a> {
         Timer::after_millis(1000).await;
 
         match barometer {
-            Ok(barometer) => Some(Barometer(barometer)),
+            Ok(barometer) => {
+                unsafe {
+                    BAROMETER_READY = true;
+                }
+                Some(Barometer(barometer))
+            }
             Err(e) => {
+                unsafe {
+                    BAROMETER_READY = false;
+                }
+
                 error!("Barometer -> {:#?}", e);
                 None
             }
@@ -41,11 +52,20 @@ impl<'a> Barometer<'a> {
 
     pub async fn read(&mut self) -> Option<BarometerData> {
         match self.0.read().await {
-            Ok(data) => Some(BarometerData {
-                pressure_hpa: data.pressure_hpa(),
-                temperature_c: data.temperature_celsius(),
-            }),
+            Ok(data) => {
+                unsafe {
+                    BAROMETER_READY = true;
+                }
+                Some(BarometerData {
+                    pressure_hpa: data.pressure_hpa(),
+                    temperature_c: data.temperature_celsius(),
+                })
+            }
             Err(e) => {
+                unsafe {
+                    BAROMETER_READY = false;
+                }
+
                 error!("Barometer -> Failed to read data: {:#?}", e);
                 None
             }
