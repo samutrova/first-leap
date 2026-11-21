@@ -3,10 +3,11 @@ use esp_hal::gpio::AnyPin;
 use esp_hal::i2c::master::AnyI2c;
 use heapless::{String, format};
 use log::error;
+use shared::DELAY;
 use shared::round::MyRound;
 
+use crate::BAROMETER_CHANNEL;
 use crate::firmware::barometer::Barometer;
-use crate::{BAROMETER_CHANNEL, DELAY};
 
 #[embassy_executor::task]
 pub async fn barometer(
@@ -58,17 +59,16 @@ pub struct BarometricData {
 
 impl BarometricData {
     pub fn round(&mut self) {
-        self.altitude_m = MyRound::round(self.altitude_m);
-        self.pressure_hpa = MyRound::round(self.pressure_hpa);
-        self.qfe_hpa = MyRound::round(self.qfe_hpa);
-        self.temperature_c = MyRound::round(self.temperature_c);
+        self.altitude_m = MyRound::roundf(self.altitude_m, 2);
+        self.pressure_hpa = MyRound::roundf(self.pressure_hpa, 2);
+        self.qfe_hpa = MyRound::roundf(self.qfe_hpa, 2);
+        self.temperature_c = MyRound::roundf(self.temperature_c, 1);
     }
 
-    pub fn as_string(&mut self) -> String<64> {
+    pub fn as_string(&mut self) -> String<80> {
         self.round();
         match format!(
-            64;
-            "{};{};{};{}",
+            "{},{},{},{}",
             self.altitude_m, self.pressure_hpa, self.qfe_hpa, self.temperature_c
         ) {
             Ok(string) => string,

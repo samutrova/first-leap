@@ -81,11 +81,15 @@ impl<'a> Imu<'a> {
     }
 
     pub async fn get_data(&mut self) -> Option<IMUData> {
-        match self.0.data_scaled(SensorSelector::new().accel().gyro()) {
+        match self
+            .0
+            .data_scaled(SensorSelector::new().accel().gyro().time())
+        {
             Ok(data) => {
                 // We can safely call .unwrap() because we selected the sensor mode (theoretically)
                 let accelerometer = data.accel.unwrap();
                 let gyroscope = data.gyro.unwrap();
+                // let time = data.time.unwrap();
 
                 unsafe {
                     IMU_READY = true;

@@ -1,8 +1,8 @@
-use crate::DELAY;
 use crate::firmware::radio::Radio;
 use embassy_time::Timer;
 use log::error;
 use log::info;
+use shared::DELAY;
 use shared::radio::RadioInitArguments;
 
 #[embassy_executor::task]

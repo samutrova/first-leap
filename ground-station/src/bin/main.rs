@@ -21,8 +21,6 @@ esp_bootloader_esp_idf::esp_app_desc!();
 mod firmware;
 mod software;
 
-const DELAY: u64 = 100;
-
 #[allow(
     clippy::large_stack_frames,
     reason = "it's not unusual to allocate larger buffers etc. in main"

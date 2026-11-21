@@ -1,7 +1,8 @@
 pub struct MyRound;
 impl MyRound {
-    pub fn round(value: f32) -> f32 {
-        const ROUND_POWER: f32 = 1_000.0; // 10^3 -> 3 decimal places
-        libm::roundf(value * ROUND_POWER) / ROUND_POWER
+    pub fn roundf(value: f32, decimals: u8) -> f32 {
+        // decimals = 3 -> 10^3 round_power
+        let round_power = libm::powf(10.0, decimals as f32);
+        libm::roundf(value * round_power) / round_power
     }
 }

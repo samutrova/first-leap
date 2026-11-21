@@ -1,7 +1,7 @@
 use crate::BAROMETER_CHANNEL;
-use crate::DELAY;
 use crate::firmware::radio::Radio;
 use embassy_time::Timer;
+use shared::DELAY;
 use shared::radio::RadioInitArguments;
 
 use crate::IMU_CHANNEL;

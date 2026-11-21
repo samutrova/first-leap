@@ -37,8 +37,6 @@ static mut IMU_READY: bool = false;
 static mut BAROMETER_READY: bool = false;
 static mut RADIO_READY: bool = false;
 
-const DELAY: u64 = 100;
-
 #[allow(
     clippy::large_stack_frames,
     reason = "it's not unusual to allocate larger buffers etc. in main"

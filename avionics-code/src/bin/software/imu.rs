@@ -3,9 +3,9 @@ use esp_hal::gpio::AnyPin;
 use esp_hal::i2c::master::AnyI2c;
 use heapless::{String, format};
 use log::error;
+use shared::DELAY;
 use shared::round::MyRound;
 
-use crate::DELAY;
 use crate::firmware::imu::{IMUData, Imu};
 
 use crate::IMU_CHANNEL;
@@ -53,34 +53,15 @@ pub struct InertialData {
 }
 
 impl InertialData {
-    pub fn round(&mut self) {
-        self.acceleration_x_ms2 = MyRound::round(self.acceleration_x_ms2);
-        self.acceleration_y_ms2 = MyRound::round(self.acceleration_y_ms2);
-        self.acceleration_z_ms2 = MyRound::round(self.acceleration_z_ms2);
-
-        self.tilt_x_deg = MyRound::round(self.tilt_x_deg);
-        self.tilt_y_deg = MyRound::round(self.tilt_y_deg);
-        self.tilt_z_deg = MyRound::round(self.tilt_z_deg);
-
-        self.g_force_x = MyRound::round(self.g_force_x);
-        self.g_force_y = MyRound::round(self.g_force_y);
-        self.g_force_z = MyRound::round(self.g_force_z);
-    }
-
-    pub fn as_string(&mut self) -> String<128> {
-        self.round();
+    pub fn as_string(&mut self) -> String<80> {
         match format!(
-            128;
-            "{};{};{};{};{};{};{};{};{}",
-
+            "{},{},{},{},{},{},{},{},{}",
             self.acceleration_x_ms2,
             self.acceleration_y_ms2,
             self.acceleration_z_ms2,
-
             self.tilt_x_deg,
             self.tilt_y_deg,
             self.tilt_z_deg,
-
             self.g_force_x,
             self.g_force_y,
             self.g_force_z,
@@ -101,31 +82,18 @@ impl IMUData {
             acceleration_y_ms2: Self::to_acceleration_ms2(self.accelerometer_y),
             acceleration_z_ms2: Self::to_acceleration_ms2(self.accelerometer_z),
 
-            tilt_x_deg: Self::to_tilt_deg(self.gyroscope_x),
-            tilt_y_deg: Self::to_tilt_deg(self.gyroscope_y),
-            tilt_z_deg: Self::to_tilt_deg(self.gyroscope_z),
+            tilt_x_deg: MyRound::roundf(self.gyroscope_x, 3),
+            tilt_y_deg: MyRound::roundf(self.gyroscope_y, 3),
+            tilt_z_deg: MyRound::roundf(self.gyroscope_z, 3),
 
-            g_force_x: Self::to_g_force(self.accelerometer_x),
-            g_force_y: Self::to_g_force(self.accelerometer_y),
-            g_force_z: Self::to_g_force(self.accelerometer_z),
+            g_force_x: MyRound::roundf(self.accelerometer_x, 1),
+            g_force_y: MyRound::roundf(self.accelerometer_y, 1),
+            g_force_z: MyRound::roundf(self.accelerometer_z, 1),
         }
     }
 
-    const ACCELEROMETER_SENSITIVITY: f32 = 4_096.0;
-
     fn to_acceleration_ms2(value: f32) -> f32 {
         const GRAVITY: f32 = 9.80665;
-
-        value / Self::ACCELEROMETER_SENSITIVITY * GRAVITY
-    }
-
-    fn to_g_force(value: f32) -> f32 {
-        value / Self::ACCELEROMETER_SENSITIVITY
-    }
-
-    fn to_tilt_deg(value: f32) -> f32 {
-        const GYROSCOPE_SENSITIVITY: f32 = 262.4;
-
-        value / GYROSCOPE_SENSITIVITY
+        MyRound::roundf(value * GRAVITY, 3)
     }
 }
